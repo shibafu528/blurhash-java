@@ -1,6 +1,22 @@
 package info.shibafu528.blurhash;
 
+import java.util.Arrays;
+
 /*package*/ class BlurhashUtil {
+    private static final float[] SRGB2LINEAR;
+
+    static {
+        SRGB2LINEAR = new float[256];
+        for (int i = 0; i < SRGB2LINEAR.length; ++i) {
+            double v = (double) i / 255;
+            if (v <= 0.04045) {
+                SRGB2LINEAR[i] = (float) (v / 12.92);
+            } else {
+                SRGB2LINEAR[i] = (float) Math.pow((v + 0.055) / 1.055, 2.4);
+            }
+        }
+    }
+
     /*package*/ static float[] decodeDC(int value) {
         return new float[]{
                 sRGBToLinear((value >> 16) & 255),
@@ -26,20 +42,26 @@ package info.shibafu528.blurhash;
     }
 
     /*package*/ static float sRGBToLinear(int value) {
-        final double v = (double) value / 255;
-        if (v <= 0.04045) {
-            return (float) (v / 12.92);
+        if (value < 0) {
+            return SRGB2LINEAR[0];
+        } else if (value >= SRGB2LINEAR.length) {
+            return SRGB2LINEAR[SRGB2LINEAR.length - 1];
         } else {
-            return (float) Math.pow((v + 0.055) / 1.055, 2.4);
+            return SRGB2LINEAR[value];
         }
     }
 
     /*package*/ static int linearToSRGB(float value) {
-        final float v = Math.max(0, Math.min(1, value));
-        if (v <= 0.0031308) {
-            return (int) Math.round(v * 12.92 * 255 + 0.5);
+        int index = Arrays.binarySearch(SRGB2LINEAR, value);
+        if (index < 0) {
+            index = ~index;
+        }
+        if (index < 0) {
+            return 0;
+        } else if (index >= SRGB2LINEAR.length) {
+            return SRGB2LINEAR.length - 1;
         } else {
-            return (int) Math.round((1.055 * Math.pow(v, 1 / 2.4d) - 0.055) * 255 + 0.5);
+            return index;
         }
     }
 }
