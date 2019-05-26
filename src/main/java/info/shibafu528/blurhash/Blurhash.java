@@ -2,12 +2,12 @@ package info.shibafu528.blurhash;
 
 import org.jetbrains.annotations.NotNull;
 
-public class Blurhash {
-    public static int[] decode(@NotNull String blurhash, int width, int height) {
+public class Blurhash implements BlurhashDecoder {
+    public int[] decode(@NotNull String blurhash, int width, int height) {
         return decode(blurhash, width, height, 1);
     }
 
-    public static int[] decode(@NotNull String blurhash, int width, int height, int punch) {
+    public int[] decode(@NotNull String blurhash, int width, int height, int punch) {
         if (blurhash.length() < 6) {
             throw new IllegalArgumentException("Too short blurhash.");
         }
@@ -27,9 +27,9 @@ public class Blurhash {
         final float[][] colors = new float[numX * numY][];
         for (int i = 0; i < colors.length; ++i) {
             if (i == 0) {
-                colors[i] = decodeDC(Base83.decode(blurhash.substring(2, 6)));
+                colors[i] = BlurhashUtil.decodeDC(Base83.decode(blurhash.substring(2, 6)));
             } else {
-                colors[i] = decodeAC(Base83.decode(blurhash.substring(4 + i * 2, 6 + i * 2)), maximumValue * punch);
+                colors[i] = BlurhashUtil.decodeAC(Base83.decode(blurhash.substring(4 + i * 2, 6 + i * 2)), maximumValue * punch);
             }
         }
 
@@ -51,54 +51,11 @@ public class Blurhash {
                     }
                 }
 
-                pixels[pos] = 255 << 24 | (linearToSRGB(r) & 255) << 16 | (linearToSRGB(g) & 255) << 8 | (linearToSRGB(b) & 255);
+                pixels[pos] = 255 << 24 | (BlurhashUtil.linearToSRGB(r) & 255) << 16 | (BlurhashUtil.linearToSRGB(g) & 255) << 8 | (BlurhashUtil.linearToSRGB(b) & 255);
                 ++pos;
             }
         }
 
         return pixels;
     }
-
-    /*package*/ static float[] decodeDC(int value) {
-        return new float[] {
-                sRGBToLinear((value >> 16) & 255),
-                sRGBToLinear((value >> 8) & 255),
-                sRGBToLinear((value) & 255)
-        };
-    }
-
-    /*package*/ static float[] decodeAC(int value, float maximumValue) {
-        final int quantR = value / (19 * 19);
-        final int quantG = (value / 19) % 19;
-        final int quantB = value % 19;
-
-        return new float[] {
-            signPow2((quantR - 9) / 9f) * maximumValue,
-            signPow2((quantG - 9) / 9f) * maximumValue,
-            signPow2((quantB - 9) / 9f) * maximumValue
-        };
-    }
-
-    /*package*/ static float signPow2(float value) {
-        return Math.signum(value) * (value * value);
-    }
-
-    /*package*/ static float sRGBToLinear(int value) {
-        final double v = (double) value / 255;
-        if (v <= 0.04045) {
-            return (float) (v / 12.92);
-        } else {
-            return (float) Math.pow((v + 0.055) / 1.055, 2.4);
-        }
-    }
-
-    /*package*/ static int linearToSRGB(float value) {
-        final float v = Math.max(0, Math.min(1, value));
-        if (v <= 0.0031308) {
-            return (int) Math.round(v * 12.92 * 255 + 0.5);
-        } else {
-            return (int) Math.round((1.055 * Math.pow(v, 1 / 2.4d) - 0.055) * 255 + 0.5);
-        }
-    }
-
 }

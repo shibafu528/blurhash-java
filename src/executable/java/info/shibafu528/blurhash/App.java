@@ -22,7 +22,7 @@ public class App {
     }
 
     public void decode(String blurhash, int width, int height, String dest) {
-        int[] pixels = Blurhash.decode(blurhash, width, height);
+        int[] pixels = new Blurhash().decode(blurhash, width, height);
         BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
         image.setRGB(0, 0, width, height, pixels, 0, width);
 
