@@ -1,0 +1,44 @@
+plugins {
+    id 'java'
+}
+
+group 'info.shibafu528.blurhash'
+version '1.0.0-SNAPSHOT'
+
+sourceSets {
+    executable
+}
+
+sourceCompatibility = JavaVersion.VERSION_1_6
+targetCompatibility = JavaVersion.VERSION_1_6
+
+compileExecutableJava {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+}
+
+compileTestJava {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compileOnly 'org.jetbrains:annotations:17.0.0'
+
+    testImplementation 'junit:junit:4.12'
+
+    executableImplementation sourceSets.main.output
+}
+
+task executableJar(type: Jar) {
+    from sourceSets.main.output
+    from sourceSets.executable.output
+
+    manifest {
+        attributes 'Main-Class': 'info.shibafu528.blurhash.App'
+    }
+}
